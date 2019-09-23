@@ -9,4 +9,8 @@ _secrets_default = os.path.join(BASE_DIR, '../.secrets.json')
 with open(os.getenv('FLASK_SETTINGS_SECRETS', _secrets_default)) as secrets_file:
     SECRETS = json.load(secrets_file)
 
-SLACK_SIGNING_SECRET = SECRETS['SLACK_SIGNING_SECRET']
+SLACK_SIGNING_SECRET = SECRETS['signing_secret']
+
+SLACK_WATCHED_CHANNELS = SECRETS['channels']
+
+GOOGLE_DOCUMENT_ID = SECRETS['doc_id']
