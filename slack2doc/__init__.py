@@ -25,11 +25,24 @@ def redirect_to_doc():
     )
 
 
-@slack_events_adapter.on("message")
-def reaction_added(event_data):
-    # TODO: write the incoming message to the Google Doc
+@slack_events_adapter.on("message.channels")
+def message_posted(event_data):
     # See https://api.slack.com/events/message.
-    pass
+    if event_data['channel'] in settings.SLACK_WATCHED_CHANNELS:
+        if event_data['edited']:
+            ...
+            # Post "Edited:" message to the Google Doc
+            # Could also attempt to edit the doc, but that could
+            # be chaotic and introduce data races
+        else:
+            ...
+            # Post standard message to the doc
+            # Could include support for logging multiple channels
+            # TODO: decide how to handle message subtypes
+            # TODO: decide how to handle reactions, stars, pins
+    else:
+        ...
+        # Return 400 code
 
 
 def _google_url_from_doc_id(doc_id: str) -> str:
