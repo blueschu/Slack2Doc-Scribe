@@ -3,7 +3,9 @@ A simple Flask app to log Slack messages to a Google Docs document
 for permanent and accessible storage.
 """
 
-from flask import Flask
+import http
+
+from flask import Flask, redirect
 from slackeventsapi import SlackEventAdapter
 
 from . import settings
@@ -17,8 +19,10 @@ slack_events_adapter = SlackEventAdapter(settings.SLACK_SIGNING_SECRET, "/slack/
 
 @app.route('/')
 def redirect_to_doc():
-    # TODO: redirect user to the logger's output document
-    pass
+    return redirect(
+        _google_url_from_doc_id(settings.GOOGLE_DOCUMENT_ID),
+        code=http.HTTPStatus.TEMPORARY_REDIRECT.value
+    )
 
 
 @slack_events_adapter.on("message")
@@ -26,6 +30,10 @@ def reaction_added(event_data):
     # TODO: write the incoming message to the Google Doc
     # See https://api.slack.com/events/message.
     pass
+
+
+def _google_url_from_doc_id(doc_id: str) -> str:
+    return f'https://docs.google.com/document/d/{doc_id}/'
 
 
 if __name__ == '__main__':
