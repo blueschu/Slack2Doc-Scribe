@@ -4,6 +4,7 @@ for permanent and accessible storage.
 """
 
 import http
+import logging
 
 from flask import Flask, redirect
 from slackeventsapi import SlackEventAdapter
@@ -27,6 +28,8 @@ def redirect_to_doc():
 
 @slack_events_adapter.on("message.channels")
 def message_posted(event_data):
+    logging.debug("Message: {}".format(event_data))
+
     # See https://api.slack.com/events/message.
     if event_data['channel'] in settings.SLACK_WATCHED_CHANNELS:
         if event_data['edited']:
