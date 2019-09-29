@@ -20,5 +20,6 @@ setup(
                 "document for permanent and accessible storage.",
     long_description=README,
     zip_safe=False,
-    install_requires=['Flask']
+    python_requires='~=3.6',
+    install_requires=REQUIREMENTS,
 )
