@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 import os
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 BASE_DIR = os.path.dirname(__file__)
+
+with open(os.path.join(BASE_DIR, 'requirements.txt')) as requirements:
+    REQUIREMENTS = requirements.read().splitlines()
 
 with open(os.path.join(BASE_DIR, 'README.rst')) as readme:
     README = readme.read()
