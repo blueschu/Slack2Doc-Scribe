@@ -15,7 +15,11 @@ __version__ = "0.1.0"
 
 app = Flask(__name__)
 
-slack_events_adapter = SlackEventAdapter(settings.SLACK_SIGNING_SECRET, "/slack/events", server=app)
+slack_events_adapter = SlackEventAdapter(
+    settings.SLACK_SIGNING_SECRET,
+    settings.SLACK_ENDPOINT,
+    server=app
+)
 
 
 @app.route('/')
