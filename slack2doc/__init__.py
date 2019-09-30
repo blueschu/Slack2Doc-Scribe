@@ -4,7 +4,7 @@ for permanent and accessible storage.
 """
 
 import http
-import logging
+import logging.config
 
 from flask import Flask, redirect
 from slackeventsapi import SlackEventAdapter
@@ -12,6 +12,11 @@ from slackeventsapi import SlackEventAdapter
 from . import settings
 
 __version__ = "0.1.0"
+
+# Setup this app's loggers.
+logging.config.dictConfig(settings.LOGGING)
+
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -32,7 +37,7 @@ def redirect_to_doc():
 
 @slack_events_adapter.on("message.channels")
 def message_posted(event_data):
-    logging.debug("Message: {}".format(event_data))
+    logger.debug("Message: {}".format(event_data))
 
     # See https://api.slack.com/events/message.
     if event_data['channel'] in settings.SLACK_WATCHED_CHANNELS:
@@ -55,6 +60,8 @@ def message_posted(event_data):
 def _google_url_from_doc_id(doc_id: str) -> str:
     return f'https://docs.google.com/document/d/{doc_id}/'
 
+
+logger.debug("App startup complete.")
 
 if __name__ == '__main__':
     app.run()
