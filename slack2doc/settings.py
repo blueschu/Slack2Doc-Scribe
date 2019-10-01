@@ -38,7 +38,7 @@ LOGGING = {
         'slack2doc': {
             'level': 'DEBUG',
             'handlers': ['default_file'],
-            'propagate': True,
+            'propagate': False,
         },
     },
 }
