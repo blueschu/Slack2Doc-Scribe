@@ -58,13 +58,18 @@ def message_posted(event_data):
 
 
 @slack_events_adapter.on("message")
-def message_posted(event_data):
+def message_posted_other(event_data):
     logger.debug("Message (message): {}".format(event_data))
 
 
 def _google_url_from_doc_id(doc_id: str) -> str:
     return f'https://docs.google.com/document/d/{doc_id}/'
 
+
+@app.after_request
+def after_request():
+    from flask import request
+    logger.debug(request.json or request.data)
 
 logger.debug("App startup complete.")
 
