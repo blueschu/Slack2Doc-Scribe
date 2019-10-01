@@ -66,13 +66,6 @@ def _google_url_from_doc_id(doc_id: str) -> str:
     return f'https://docs.google.com/document/d/{doc_id}/'
 
 
-@app.after_request
-def after_request(response):
-    from flask import request
-    logger.debug(request.json or request.data)
-    return response
-
-
 logger.debug("App startup complete.")
 
 if __name__ == '__main__':
