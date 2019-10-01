@@ -35,9 +35,9 @@ def redirect_to_doc():
     )
 
 
-@slack_events_adapter.on("message.channels")
+@slack_events_adapter.on("message")
 def message_posted(event_data):
-    logger.debug("Message (message.channels): {}".format(event_data))
+    logger.debug("Message: {}".format(event_data))
 
     # See https://api.slack.com/events/message.
     if event_data['channel'] in settings.SLACK_WATCHED_CHANNELS:
@@ -55,11 +55,6 @@ def message_posted(event_data):
     else:
         ...
         # Return 400 code
-
-
-@slack_events_adapter.on("message")
-def message_posted_other(event_data):
-    logger.debug("Message (message): {}".format(event_data))
 
 
 def _google_url_from_doc_id(doc_id: str) -> str:
