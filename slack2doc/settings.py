@@ -17,6 +17,10 @@ GOOGLE_DOCUMENT_ID = SECRETS['doc_id']
 
 SLACK_ENDPOINT = SECRETS['endpoint']
 
+SLACK_USER_CACHE_FILE = './user_cache.json'
+
+SLACK_API_TOKEN = SECRETS['api_token']
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
