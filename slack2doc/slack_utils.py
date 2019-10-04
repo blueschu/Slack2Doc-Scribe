@@ -2,10 +2,9 @@
 Utilities to interface with Slack's Web API.
 """
 
-import functools
 import json
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
 
 import slack
 
@@ -16,6 +15,7 @@ CACHE_TIME_TO_LIVE = timedelta(days=7)
 _SLACK_USER_CACHE = {}
 
 _CLIENT = slack.WebClient(token=settings.SLACK_API_TOKEN)
+
 
 class SlackUser:
     """
@@ -59,9 +59,11 @@ def init_app(app):
     Save the current state of the user cache dictionary to the storage file
     on app teardown.
     """
-    app.teardown_appcontext(
-        functools.partial(_store_user_cache, _SLACK_USER_CACHE)
-    )
+
+    def _teardown(_e):
+        _store_user_cache(_SLACK_USER_CACHE)
+
+    app.teardown_appcontext(_teardown)
 
 
 def get_user_display(user_id: str) -> str:
@@ -102,7 +104,7 @@ def _load_user_cache():
     try:
         with open(settings.SLACK_USER_CACHE_FILE, "r") as in_file:
             user_dict = json.load(in_file)
-        return {k: SlackUser(**v) for k, v in user_dict.iteritems()}
+        return {k: SlackUser(**v) for k, v in user_dict.items()}
     except FileNotFoundError:
         return {}
 
@@ -111,6 +113,6 @@ def _store_user_cache(user_cache):
     # Open storage file for writing, truncating existing contents
     with open(settings.SLACK_USER_CACHE_FILE, "w") as out_file:
         json.dump(
-            {k: v.serialize() for k, v in user_cache.iteritems()},
+            {k: v.serialize() for k, v in user_cache.items()},
             out_file
         )
