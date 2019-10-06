@@ -5,16 +5,30 @@ Utilities to interface with Slack's Web API.
 import json
 import logging
 from datetime import datetime, timedelta
+from typing import Dict
 
 import slack
 
 from . import settings
 
 CACHE_TIME_TO_LIVE = timedelta(days=7)
+"""
+The duration of time for which a cached `SlackUser` instance is considered
+to still be valid. 
+
+SlackUser instances with a `last_refreshed` attribute older than this
+duration will be refetched on their next access.
+"""
 
 _SLACK_USER_CACHE = {}
+"""
+Internal cache mapping Slack user ids to `SlackUser` instances. 
+"""
 
 _CLIENT = slack.WebClient(token=settings.SLACK_API_TOKEN)
+"""
+Slack WebClient instance for this module's interactions with the Slack WebAPI.
+"""
 
 
 class SlackUser:
@@ -37,14 +51,24 @@ class SlackUser:
 
     @property
     def entry_expired(self) -> bool:
+        """
+        Return `True` is this `SlackUser` is older than the allotted TTL
+        and should be refreshed.
+        """
         return (datetime.now() - self.last_refreshed) > CACHE_TIME_TO_LIVE
 
     @property
     def display_name(self) -> str:
+        """
+        Return this user's preferred display name.
+        """
         # TODO: Add logic to delegate between the various profile names
         return self.real_name
 
-    def serialize(self):
+    def serialize(self) -> dict:
+        """
+        Convert this `SlackUser` into a JSON serializable dictionary.
+        """
         return {**self.__dict__, 'updated': self.last_refreshed.timestamp()}
 
     def __str__(self):
@@ -85,6 +109,12 @@ def get_user_display(user_id: str) -> str:
 
 
 def _api_fetch_user_info(user_id: str) -> SlackUser:
+    """
+    Retrieve the information about the Slack user with the specified user
+    id from the Slack Web API.
+
+    Raises a `RuntimeError` if the API request is unsuccessful.
+    """
     response = _CLIENT.users_info(user=user_id)
 
     if response["ok"]:
@@ -100,7 +130,11 @@ def _api_fetch_user_info(user_id: str) -> SlackUser:
         raise RuntimeError(err_message)
 
 
-def _load_user_cache():
+def _load_user_cache() -> Dict[str, SlackUser]:
+    """
+    Read the configured user cache file and return is contents as a
+    dictionary mapping between user ids and `SlackUser` instances.
+    """
     try:
         with open(settings.SLACK_USER_CACHE_FILE, "r") as in_file:
             user_dict = json.load(in_file)
@@ -109,7 +143,11 @@ def _load_user_cache():
         return {}
 
 
-def _store_user_cache(user_cache):
+def _store_user_cache(user_cache: Dict[str, SlackUser]):
+    """
+    Write the given user id to `SlackUser` mapping to the configured
+    user cache file.
+    """
     # Open storage file for writing, truncating existing contents
     with open(settings.SLACK_USER_CACHE_FILE, "w") as out_file:
         json.dump(
