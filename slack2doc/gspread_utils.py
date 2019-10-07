@@ -2,15 +2,31 @@ import json
 from oauth2client.service_account import ServiceAccountCredentials as SACreds
 import gspread
 import time
+from enum import Enum, unique
+import logging
 
-_spreadsheet_file_name = "NU Rover Slack Log"
-_col_headers = ["Username", "Message", "Timestamp Converted", "User ID",
-                "Timestamp", "Edited Timestamp"]
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials as SACreds
 
-# Added Dictionary to be able to get column indices based on name
-_headers_dict = {}
-for i in range(len(_col_headers)):
-    _headers_dict[_col_headers[i]] = i+1
+from . import settings
+
+GOOGLE_ACCESS_SCOPES = [
+    "https://spreadsheets.google.com/feeds",
+    'https://www.googleapis.com/auth/spreadsheets',
+    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/drive"
+]
+
+
+@unique
+class ColumnHeaders(Enum):
+    """The possible headers for the Google Sheet's spreadsheet."""
+    Username = 1
+    Message = 2
+    TimestampConverted = 3
+    UserID = 4
+    Timestamp = 5
+    TimestampEdited = 6
 
 
 def _message_edit(msg, sheet):
@@ -34,7 +50,7 @@ def _message_edit(msg, sheet):
     # Make sure found cells come from timestamp column
     valid_cells = []
     for cell in cells:
-        if cell.col == _headers_dict['Timestamp']:
+        if cell.col == ColumnHeaders['Timestamp']:
             valid_cells.append(cell)
 
     # If only one cell is found with the timestamp of the original message
@@ -43,9 +59,9 @@ def _message_edit(msg, sheet):
         # Get row value
         cell_row = valid_cells[0].row
         # Get column value where the message is stored
-        message_cell_col = _headers_dict['Message']
+        message_cell_col = ColumnHeaders['Message']
         # Get column value where edited timestamp is stored
-        edited_timestamp_cell_col = _headers_dict['Edited Timestamp']
+        edited_timestamp_cell_col = ColumnHeaders['Edited Timestamp']
 
         # Updated the cells with new edits
         sheet.update_cell(cell_row, message_cell_col, new_message)
@@ -84,7 +100,7 @@ def _message_delete(msg, sheet):
     # Make sure found cells come from timestamp column
     valid_cells = []
     for cell in cells:
-        if cell.col == _headers_dict['Timestamp']:
+        if cell.col == ColumnHeaders['Timestamp']:
             valid_cells.append(cell)
 
     # If only one cell is found with the timestamp of the original message
@@ -150,13 +166,9 @@ def put_into_sheets(payload):
     if payload['type'] == 'message':
 
         # Connecting to google's API
-        # Giving permissions
-        scope = ["https://spreadsheets.google.com/feeds",
-                 'https://www.googleapis.com/auth/spreadsheets',
-                 "https://www.googleapis.com/auth/drive.file",
-                 "https://www.googleapis.com/auth/drive"]
+
         # Getting credentials
-        creds = SACreds.from_json_keyfile_name("Slack2Docscreds.json", scope)
+        creds = SACreds.from_json_keyfile_name("Slack2Docscreds.json", GOOGLE_ACCESS_SCOPES)
 
         # Initializing connection with GSpread
         client = gspread.authorize(creds)
@@ -198,7 +210,7 @@ def put_into_sheets(payload):
             num_rows = len(current_channel_log_worksheet.col_values(1))
 
             # If the current_headers line up with the updated header structure
-            if len(current_headers) == len(_col_headers):
+            if len(current_headers) == len(ColumnHeaders):
 
                 # If there is only 1 row in the spreadsheet
                 if num_rows == 1:
@@ -217,8 +229,8 @@ def put_into_sheets(payload):
 
                 # Loops through official headers to see if they line up with
                 # current headers (in case of update)
-                for column in range(len(_col_headers)):
-                    if _col_headers[column] != current_headers[column]:
+                for i, column in enumerate(ColumnHeaders):
+                    if column != current_headers[i]:
                         # Headers don't line up with new headers --> set
                         # variable to false to trigger update later
                         headers_properly_setup = False
@@ -229,7 +241,7 @@ def put_into_sheets(payload):
                     logging.warning("Prexisting table, with improper formatting: Fixing")
                     # TODO: move all data, not just headers
                     current_channel_log_worksheet.delete_row(1)
-                    current_channel_log_worksheet.insert_row(_col_headers, 1)
+                    current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
             # If the official header row doesn't have the same amount of
             # headers as the header row in the doc
             else:
@@ -240,18 +252,18 @@ def put_into_sheets(payload):
 
                 # TODO: move all data, not just headers
                 current_channel_log_worksheet.delete_row(1)
-                current_channel_log_worksheet.insert_row(_col_headers, 1)
+                current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
 
         # If no worksheet exists
         else:
             # Set up variables for creating a new spreadsheet
             rows = 1
-            cols = len(_col_headers)
+            cols = len(ColumnHeaders)
 
             # Creates new worksheet
             sheet.add_worksheet(desired_worksheet, rows, cols)
             current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
-            current_channel_log_worksheet.insert_row(_col_headers, 1)
+            current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
 
         if 'subtype' in payload:
             if payload['subtype'] == "message_changed":
