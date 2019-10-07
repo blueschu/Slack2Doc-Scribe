@@ -174,7 +174,7 @@ def put_into_sheets(payload):
         client = gspread.authorize(creds)
 
         # Opening Spreadsheet
-        sheet = client.open(_spreadsheet_file_name)
+        sheet = client.open(settings.GOOGLE_SPREADSHEET_NAME)
 
         # Finding the worksheet within the overall spreadsheet that
         # corresponds to the channel
