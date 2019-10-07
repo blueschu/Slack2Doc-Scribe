@@ -9,8 +9,7 @@ import logging.config
 from flask import Flask, redirect
 from slackeventsapi import SlackEventAdapter
 
-from . import settings, slack_utils
-from gspread_utils import put_into_sheets
+from . import settings, slack_utils, gspread_utils
 
 __version__ = "0.1.0"
 
@@ -47,7 +46,7 @@ def create_app() -> Flask:
             # Ignore message that were not sent to a whitelisted channel.
             return
 
-        put_into_sheets(event)
+        gspread_utils.put_into_sheets(event)
 
     return app
 
