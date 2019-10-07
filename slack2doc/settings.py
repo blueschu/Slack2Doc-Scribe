@@ -21,6 +21,8 @@ SLACK_USER_CACHE_FILE = './user_cache.json'
 
 SLACK_API_TOKEN = SECRETS['api_token']
 
+GOOGLE_SPREADSHEET_NAME = SECRETS['GOOGLE_SPREADSHEET_NAME']
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

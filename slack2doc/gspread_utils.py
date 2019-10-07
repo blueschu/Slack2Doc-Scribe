@@ -1,10 +1,13 @@
-import json
-from oauth2client.service_account import ServiceAccountCredentials as SACreds
-import gspread
-import time
+"""
+Utilities for interfacing with Google Sheet's API.
+"""
+
+from datetime import datetime, tzinfo
+
 from enum import Enum, unique
 import logging
 
+import pytz
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials as SACreds
 
@@ -17,6 +20,7 @@ GOOGLE_ACCESS_SCOPES = [
     "https://www.googleapis.com/auth/drive"
 ]
 
+DISPLAY_TIMEZONE = pytz.timezone('US/Eastern')
 
 @unique
 class ColumnHeaders(Enum):
@@ -142,11 +146,10 @@ def _message(msg, sheet):
     """
 
     # Formats timestamp
-    timestamp = time.strftime('%Y-%m-%d %H:%M:%S',
-                              time.localtime(int(float(msg['ts']))))
+    timestamp = datetime.fromtimestamp(msg['ts'], tz=DISPLAY_TIMEZONE)
 
     # Prepares row to be inserted into spreadsheet
-    insertRow = [msg['user'], msg['text'], timestamp, msg['user'], msg['ts']]
+    insertRow = [msg['user'], msg['text'], timestamp.isoformat(), msg['user'], msg['ts']]
 
     # Inserts row into the spreadsheet with an offset of 2
     # (After row 1 (header row))
