@@ -10,6 +10,7 @@ from flask import Flask, redirect
 from slackeventsapi import SlackEventAdapter
 
 from . import settings, slack_utils
+from gspread_utils import put_into_sheets
 
 __version__ = "0.1.0"
 
@@ -46,17 +47,7 @@ def create_app() -> Flask:
             # Ignore message that were not sent to a whitelisted channel.
             return
 
-        if event_data['edited']:
-            ...
-            # Post "Edited:" message to the Google Doc
-            # Could also attempt to edit the doc, but that could
-            # be chaotic and introduce data races
-        else:
-            ...
-            # Post standard message to the doc
-            # Could include support for logging multiple channels
-            # TODO: decide how to handle message subtypes
-            # TODO: decide how to handle reactions, stars, pins
+        put_into_sheets(event)
 
     return app
 
@@ -64,4 +55,3 @@ def create_app() -> Flask:
 
 def _google_url_from_doc_id(doc_id: str) -> str:
     return f'https://docs.google.com/document/d/{doc_id}/'
-
