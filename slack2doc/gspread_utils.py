@@ -3,15 +3,6 @@ from oauth2client.service_account import ServiceAccountCredentials as SACreds
 import gspread
 import time
 
-import paho.mqtt.client as mqtt
-host = 'broker.hivemq.com'  # "10.128.189.236" #'iot.eclipse.org'
-port = 1883
-keepalive = 30
-client_id = None
-topic = "NUrover/slack2docsTEST"
-
-
-
 _spreadsheet_file_name = "NU Rover Slack Log"
 _col_headers = ["Username", "Message", "Timestamp Converted", "User ID",
                 "Timestamp", "Edited Timestamp"]
@@ -275,45 +266,3 @@ def put_into_sheets(payload):
         else:
             # Normal message
             _message(payload, current_channel_log_worksheet)
-
-
-def main():
-
-    def on_connect(client, userdata, flags, rc):
-
-        print("Connecting...")
-        if rc == 0:
-            # Callback for when the client receives a CONNACK response
-            # from the server.
-            print("Connected with result code {}".format(rc))
-            # Subscribes to topic with QoS 2
-            client.subscribe(topic, 0)
-        else:
-            print("Error in connection")
-
-    def on_message(client, userdata, msg):
-
-        payloadJSON = msg.payload
-        # print(payloadJSON)
-
-        # print(type(payloadJSON))
-
-        try:
-            payload = json.loads(payloadJSON)
-            # print(payload)
-
-            put_into_sheets(payload)
-        except Exception as e:
-            print(e)
-            return
-
-    client = mqtt.Client(client_id=client_id, clean_session=True)
-    client.on_connect = on_connect
-    client.on_message = on_message
-    connection = client.connect(host, port, keepalive)
-
-    client.loop_forever()
-
-
-if __name__ == '__main__':
-    main()
