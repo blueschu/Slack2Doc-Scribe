@@ -52,18 +52,18 @@ def _message_edit(msg, sheet):
         sheet.update_cell(cell_row, edited_timestamp_cell_col, new_time_stamp)
 
         # Prints success to console
-        print(f"Cells ({cell_row}, {message_cell_col}), ({cell_row}, {edited_timestamp_cell_col}) updated")
+        logging.info(f"Cells ({cell_row}, {message_cell_col}), ({cell_row}, {edited_timestamp_cell_col}) updated")
 
     # If no previous messages were found
     # with the timestamp of the message to edit
     elif len(valid_cells) == 0:
         # Make no changes, print to console
-        print("Original message not found")
+        logging.warning("Original message not found")
     # If more than one message was found with
     # the original timestamp, unable to make edit
     elif len(valid_cells) > 1:
         # Make no changes, print to console
-        print("Multiple Cells with same time stamp: Unable to edit")
+        logging.warning("Multiple Cells with same time stamp: Unable to edit")
 
 
 def _message_delete(msg, sheet):
@@ -97,18 +97,18 @@ def _message_delete(msg, sheet):
         sheet.delete_row(cell_row)
 
         # Prints Success message to console
-        print(f"Row {cell_row} deleted")
+        logging.info(f"Row {cell_row} deleted")
 
     # If there are no messages found with the timestamp of the original message
     elif len(valid_cells) == 0:
         # Do nothing, print to console
-        print("Original message not found")
+        logging.warning("Original message not found")
 
     # If there are more than 1 message found with the timestamp
     # of the original message
     elif len(valid_cells) > 1:
         # Do nothing, print to console
-        print("Multiple Cells with same time stamp: Unable to delete")
+        logging.warning("Multiple Cells with same time stamp: Unable to delete")
 
 
 def _message_reply(msg, sheet):
@@ -137,7 +137,7 @@ def _message(msg, sheet):
     sheet.insert_row(insertRow, 2)
 
     # Prints success to console
-    print("Message Added")
+    logging.info("Message Added")
 
 
 def put_into_sheets(payload):
@@ -226,7 +226,7 @@ def put_into_sheets(payload):
 
                 # If the header rows are not set up properly, change them
                 if not headers_properly_setup:
-                    print("Prexisting table, with improper formatting: Fixing")
+                    logging.warning("Prexisting table, with improper formatting: Fixing")
                     # TODO: move all data, not just headers
                     current_channel_log_worksheet.delete_row(1)
                     current_channel_log_worksheet.insert_row(_col_headers, 1)
