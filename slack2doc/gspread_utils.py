@@ -165,7 +165,6 @@ def put_into_sheets(payload):
     google spreadsheet
     """
 
-    # Confirming that event is a message event
     if payload['type'] != 'message':
         raise TypeError("payload must be a Slack Event dictionary of type 'message'")
 
@@ -173,7 +172,6 @@ def put_into_sheets(payload):
     creds = SACreds.from_json_keyfile_name("Slack2Docscreds.json", GOOGLE_ACCESS_SCOPES)
     client = gspread.authorize(creds)
 
-    # Opening Spreadsheet
     sheet = client.open(settings.GOOGLE_SPREADSHEET_NAME)
 
     # Gets the name of the worksheet that the message belongs in
@@ -183,22 +181,17 @@ def put_into_sheets(payload):
     # of the desired channel
     current_channel_log_worksheet = None
 
-    # If worksheet exists
     try:
-        # Store worksheet in current_channel_log_worksheet
         current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
 
-        # Important Variables
         # Current headers of the worksheet. Used to check
         # to see if they are different/incorrect/updated
         current_headers = current_channel_log_worksheet.row_values(1)
-        # Number of rows in the spreadsheet
-        num_rows = len(current_channel_log_worksheet.col_values(1))
+        num_rows = current_channel_log_worksheet.col_count
 
         # If the current_headers line up with the updated header structure
         if len(current_headers) == len(ColumnHeaders):
 
-            # If there is only 1 row in the spreadsheet
             if num_rows == 1:
                 """
                 With the current setup of inserting messages and keeping a
@@ -222,7 +215,6 @@ def put_into_sheets(payload):
                     headers_properly_setup = False
                     break
 
-            # If the header rows are not set up properly, change them
             if not headers_properly_setup:
                 logging.warning("Prexisting table, with improper formatting: Fixing")
                 # TODO: move all data, not just headers
@@ -240,9 +232,7 @@ def put_into_sheets(payload):
             current_channel_log_worksheet.delete_row(1)
             current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
 
-    # If no worksheet exists
     except gspread.WorksheetNotFound:
-        # Set up variables for creating a new spreadsheet
         rows = 1
         cols = len(ColumnHeaders)
 
