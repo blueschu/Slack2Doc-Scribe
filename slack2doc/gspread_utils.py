@@ -190,7 +190,7 @@ def put_into_sheets(payload):
         num_rows = current_channel_log_worksheet.col_count
 
         # If the current_headers line up with the updated header structure
-        if len(current_headers) == len(ColumnHeaders):
+        if current_headers != list(ColumnHeaders.__members__.keys()):
 
             if num_rows == 1:
                 """
