@@ -189,46 +189,17 @@ def put_into_sheets(payload):
         current_headers = current_channel_log_worksheet.row_values(1)
         num_rows = current_channel_log_worksheet.col_count
 
-        # If the current_headers line up with the updated header structure
+        # Check if the current_headers line up with the updated header structure
         if current_headers != list(ColumnHeaders.__members__.keys()):
-
-            if num_rows == 1:
-                """
-                With the current setup of inserting messages and keeping a
-                header row, there must be an empty row below the header
-                row.This if statement takes care of this special case where
-                there is only a header row and 0 rows below it
-                """
-                current_channel_log_worksheet.insert_row([], 1)
-                current_channel_log_worksheet.insert_row(current_headers, 1)
-                current_channel_log_worksheet.delete_row(3)
-
-            # Assumes that they are set up properly
-            headers_properly_setup = True
-
-            # Loops through official headers to see if they line up with
-            # current headers (in case of update)
-            for i, column in enumerate(ColumnHeaders):
-                if column != current_headers[i]:
-                    # Headers don't line up with new headers --> set
-                    # variable to false to trigger update later
-                    headers_properly_setup = False
-                    break
-
-            if not headers_properly_setup:
-                logging.warning("Prexisting table, with improper formatting: Fixing")
-                # TODO: move all data, not just headers
-                current_channel_log_worksheet.delete_row(1)
-                current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
-        # If the official header row doesn't have the same amount of
-        # headers as the header row in the doc
-        else:
-            if num_rows == 1 or num_rows == 0:
-                current_channel_log_worksheet.insert_row([], 1)
-                current_channel_log_worksheet.insert_row(current_headers, 1)
-                current_channel_log_worksheet.delete_row(3)
-
+            logging.warning("Prexisting table, with improper formatting: Fixing")
             # TODO: move all data, not just headers
+            current_channel_log_worksheet.delete_row(1)
+            current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
+        else:
+            if num_rows in (0, 1):
+                current_channel_log_worksheet.insert_row([], 1)
+                current_channel_log_worksheet.insert_row(current_headers, 1)
+                current_channel_log_worksheet.delete_row(3)
             current_channel_log_worksheet.delete_row(1)
             current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
 
@@ -251,4 +222,3 @@ def put_into_sheets(payload):
     callback = message_callback_lookup[payload.get('subtype')]
 
     callback(payload, current_channel_log_worksheet)
-
