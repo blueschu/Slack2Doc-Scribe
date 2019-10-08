@@ -93,7 +93,6 @@ def _message_delete(msg, sheet):
     the whole row with the message will be deleted
     """
 
-    # Gathering important information from msg
     old_time_stamp = msg['ts']
 
     # Finding other cells with same timestamp
@@ -102,10 +101,7 @@ def _message_delete(msg, sheet):
     cells = sheet.findall(old_time_stamp)
 
     # Make sure found cells come from timestamp column
-    valid_cells = []
-    for cell in cells:
-        if cell.col == ColumnHeaders['Timestamp']:
-            valid_cells.append(cell)
+    valid_cells = [c for c in cells if c.col == ColumnHeaders['Timestamp']]
 
     # If only one cell is found with the timestamp of the original message
     if len(valid_cells) == 1:
