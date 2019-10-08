@@ -22,6 +22,7 @@ GOOGLE_ACCESS_SCOPES = [
 
 DISPLAY_TIMEZONE = pytz.timezone('US/Eastern')
 
+
 @unique
 class ColumnHeaders(Enum):
     """The possible headers for the Google Sheet's spreadsheet."""
@@ -268,16 +269,14 @@ def put_into_sheets(payload):
             current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
             current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
 
-        if 'subtype' in payload:
-            if payload['subtype'] == "message_changed":
-                _message_edit(payload, current_channel_log_worksheet)
-            elif payload['subtype'] == "message_deleted":
-                _message_delete(payload, current_channel_log_worksheet)
-            elif payload['subtype'] == "message_replied":
-                _message_reply(payload, current_channel_log_worksheet)
-            else:
-                # Generic Handler?
-                pass
-        else:
-            # Normal message
-            _message(payload, current_channel_log_worksheet)
+        message_callback_lookup = {
+            'message_change': _message_edit,
+            'message_deleted': _message_delete,
+            'message_reply': _message_reply,
+            None: _message
+        }
+
+        callback = message_callback_lookup[payload.get('subtype')]
+
+        callback(payload, current_channel_log_worksheet)
+
