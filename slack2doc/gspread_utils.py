@@ -41,7 +41,6 @@ def _message_edit(msg, sheet):
     column will be assigned the new timestamp
     """
 
-    # Gathering important information from msg
     old_time_stamp = msg['message']['ts']
     new_time_stamp = msg['message']['edited']['ts']
     new_message = msg['message']['text']
@@ -52,14 +51,17 @@ def _message_edit(msg, sheet):
     cells = sheet.findall(old_time_stamp)
 
     # Make sure found cells come from timestamp column
-    valid_cells = []
-    for cell in cells:
-        if cell.col == ColumnHeaders['Timestamp']:
-            valid_cells.append(cell)
+    valid_cells = [c for c in cells if c.col == ColumnHeaders['Timestamp'].value]
 
     # If only one cell is found with the timestamp of the original message
-    if len(valid_cells) == 1:
 
+    if not valid_cells:
+        logging.warning("Original message not found")
+        # TODO: Add additional error information
+    elif len(valid_cells) > 1:
+        logging.warning("Multiple Cells with same time stamp: Unable to edit")
+        # TODO: Add additional error information
+    else:
         # Get row value
         cell_row = valid_cells[0].row
         # Get column value where the message is stored
@@ -73,17 +75,6 @@ def _message_edit(msg, sheet):
 
         # Prints success to console
         logging.info(f"Cells ({cell_row}, {message_cell_col}), ({cell_row}, {edited_timestamp_cell_col}) updated")
-
-    # If no previous messages were found
-    # with the timestamp of the message to edit
-    elif len(valid_cells) == 0:
-        # Make no changes, print to console
-        logging.warning("Original message not found")
-    # If more than one message was found with
-    # the original timestamp, unable to make edit
-    elif len(valid_cells) > 1:
-        # Make no changes, print to console
-        logging.warning("Multiple Cells with same time stamp: Unable to edit")
 
 
 def _message_delete(msg, sheet):
