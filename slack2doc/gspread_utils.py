@@ -171,10 +171,6 @@ def put_into_sheets(payload):
     # Gets the name of the worksheet that the message belongs in
     desired_worksheet = payload['channel']
 
-    # Initializing the variable that will point to worksheet
-    # of the desired channel
-    current_channel_log_worksheet = None
-
     try:
         current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
 
