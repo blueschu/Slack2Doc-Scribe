@@ -170,39 +170,21 @@ def put_into_sheets(payload):
         raise TypeError("payload must be a Slack Event dictionary of type 'message'")
 
     # Connecting to google's API
-
-    # Getting credentials
     creds = SACreds.from_json_keyfile_name("Slack2Docscreds.json", GOOGLE_ACCESS_SCOPES)
-
-    # Initializing connection with GSpread
     client = gspread.authorize(creds)
 
     # Opening Spreadsheet
     sheet = client.open(settings.GOOGLE_SPREADSHEET_NAME)
 
-    # Finding the worksheet within the overall spreadsheet that
-    # corresponds to the channel
-    worksheets = sheet.worksheets()
-
     # Gets the name of the worksheet that the message belongs in
     desired_worksheet = payload['channel']
 
-    # Assumes that there is not an existing spreadsheet
-    desired_worksheet_exists = False
-
-    # Intializing the variable that will point to worksheet
+    # Initializing the variable that will point to worksheet
     # of the desired channel
     current_channel_log_worksheet = None
 
-    # Loops through all worksheets and determines if a previous
-    # one exists or not.
-    for worksheet in worksheets:
-        if worksheet.title == desired_worksheet:
-            desired_worksheet_exists = True
-            break
-
     # If worksheet exists
-    if desired_worksheet_exists:
+    try:
         # Store worksheet in current_channel_log_worksheet
         current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
 
@@ -259,7 +241,7 @@ def put_into_sheets(payload):
             current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
 
     # If no worksheet exists
-    else:
+    except gspread.WorksheetNotFound:
         # Set up variables for creating a new spreadsheet
         rows = 1
         cols = len(ColumnHeaders)
