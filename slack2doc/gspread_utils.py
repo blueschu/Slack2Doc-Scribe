@@ -144,18 +144,12 @@ def _message(msg, sheet):
     Helper function to handle messages. Creates readable
     timestamp and inserts data into the spreadsheet above all other messages
     """
-
-    # Formats timestamp
     timestamp = datetime.fromtimestamp(msg['ts'], tz=DISPLAY_TIMEZONE)
-
-    # Prepares row to be inserted into spreadsheet
-    insertRow = [msg['user'], msg['text'], timestamp.isoformat(), msg['user'], msg['ts']]
+    row_data = [msg['user'], msg['text'], timestamp.isoformat(), msg['user'], msg['ts']]
 
     # Inserts row into the spreadsheet with an offset of 2
     # (After row 1 (header row))
-    sheet.insert_row(insertRow, 2)
-
-    # Prints success to console
+    sheet.insert_row(row_data, 2)
     logging.info("Message Added")
 
 
@@ -184,8 +178,6 @@ def put_into_sheets(payload):
     try:
         current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
 
-        # Current headers of the worksheet. Used to check
-        # to see if they are different/incorrect/updated
         current_headers = current_channel_log_worksheet.row_values(1)
         num_rows = current_channel_log_worksheet.col_count
 
@@ -205,7 +197,7 @@ def put_into_sheets(payload):
         rows = 1
         cols = len(ColumnHeaders)
 
-        # Creates new worksheet
+        # Create new worksheet
         sheet.add_worksheet(desired_worksheet, rows, cols)
         current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
 
