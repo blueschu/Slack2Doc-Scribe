@@ -2,13 +2,12 @@
 Utilities for interfacing with Google Sheet's API.
 """
 
-from datetime import datetime, tzinfo
-
-from enum import Enum, unique
 import logging
+from datetime import datetime
+from enum import Enum, unique
 
-import pytz
 import gspread
+import pytz
 from oauth2client.service_account import ServiceAccountCredentials as SACreds
 
 from . import settings
@@ -167,116 +166,117 @@ def put_into_sheets(payload):
     """
 
     # Confirming that event is a message event
-    if payload['type'] == 'message':
+    if payload['type'] != 'message':
+        raise TypeError("payload must be a Slack Event dictionary of type 'message'")
 
-        # Connecting to google's API
+    # Connecting to google's API
 
-        # Getting credentials
-        creds = SACreds.from_json_keyfile_name("Slack2Docscreds.json", GOOGLE_ACCESS_SCOPES)
+    # Getting credentials
+    creds = SACreds.from_json_keyfile_name("Slack2Docscreds.json", GOOGLE_ACCESS_SCOPES)
 
-        # Initializing connection with GSpread
-        client = gspread.authorize(creds)
+    # Initializing connection with GSpread
+    client = gspread.authorize(creds)
 
-        # Opening Spreadsheet
-        sheet = client.open(settings.GOOGLE_SPREADSHEET_NAME)
+    # Opening Spreadsheet
+    sheet = client.open(settings.GOOGLE_SPREADSHEET_NAME)
 
-        # Finding the worksheet within the overall spreadsheet that
-        # corresponds to the channel
-        worksheets = sheet.worksheets()
+    # Finding the worksheet within the overall spreadsheet that
+    # corresponds to the channel
+    worksheets = sheet.worksheets()
 
-        # Gets the name of the worksheet that the message belongs in
-        desired_worksheet = payload['channel']
+    # Gets the name of the worksheet that the message belongs in
+    desired_worksheet = payload['channel']
 
-        # Assumes that there is not an existing spreadsheet
-        desired_worksheet_exists = False
+    # Assumes that there is not an existing spreadsheet
+    desired_worksheet_exists = False
 
-        # Intializing the variable that will point to worksheet
-        # of the desired channel
-        current_channel_log_worksheet = None
+    # Intializing the variable that will point to worksheet
+    # of the desired channel
+    current_channel_log_worksheet = None
 
-        # Loops through all worksheets and determines if a previous
-        # one exists or not.
-        for worksheet in worksheets:
-            if worksheet.title == desired_worksheet:
-                desired_worksheet_exists = True
-                break
+    # Loops through all worksheets and determines if a previous
+    # one exists or not.
+    for worksheet in worksheets:
+        if worksheet.title == desired_worksheet:
+            desired_worksheet_exists = True
+            break
 
-        # If worksheet exists
-        if desired_worksheet_exists:
-            # Store worksheet in current_channel_log_worksheet
-            current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
+    # If worksheet exists
+    if desired_worksheet_exists:
+        # Store worksheet in current_channel_log_worksheet
+        current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
 
-            # Important Variables
-            # Current headers of the worksheet. Used to check
-            # to see if they are different/incorrect/updated
-            current_headers = current_channel_log_worksheet.row_values(1)
-            # Number of rows in the spreadsheet
-            num_rows = len(current_channel_log_worksheet.col_values(1))
+        # Important Variables
+        # Current headers of the worksheet. Used to check
+        # to see if they are different/incorrect/updated
+        current_headers = current_channel_log_worksheet.row_values(1)
+        # Number of rows in the spreadsheet
+        num_rows = len(current_channel_log_worksheet.col_values(1))
 
-            # If the current_headers line up with the updated header structure
-            if len(current_headers) == len(ColumnHeaders):
+        # If the current_headers line up with the updated header structure
+        if len(current_headers) == len(ColumnHeaders):
 
-                # If there is only 1 row in the spreadsheet
-                if num_rows == 1:
-                    """
-                    With the current setup of inserting messages and keeping a
-                    header row, there must be an empty row below the header
-                    row.This if statement takes care of this special case where
-                    there is only a header row and 0 rows below it
-                    """
-                    current_channel_log_worksheet.insert_row([], 1)
-                    current_channel_log_worksheet.insert_row(current_headers, 1)
-                    current_channel_log_worksheet.delete_row(3)
+            # If there is only 1 row in the spreadsheet
+            if num_rows == 1:
+                """
+                With the current setup of inserting messages and keeping a
+                header row, there must be an empty row below the header
+                row.This if statement takes care of this special case where
+                there is only a header row and 0 rows below it
+                """
+                current_channel_log_worksheet.insert_row([], 1)
+                current_channel_log_worksheet.insert_row(current_headers, 1)
+                current_channel_log_worksheet.delete_row(3)
 
-                # Assumes that they are set up properly
-                headers_properly_setup = True
+            # Assumes that they are set up properly
+            headers_properly_setup = True
 
-                # Loops through official headers to see if they line up with
-                # current headers (in case of update)
-                for i, column in enumerate(ColumnHeaders):
-                    if column != current_headers[i]:
-                        # Headers don't line up with new headers --> set
-                        # variable to false to trigger update later
-                        headers_properly_setup = False
-                        break
+            # Loops through official headers to see if they line up with
+            # current headers (in case of update)
+            for i, column in enumerate(ColumnHeaders):
+                if column != current_headers[i]:
+                    # Headers don't line up with new headers --> set
+                    # variable to false to trigger update later
+                    headers_properly_setup = False
+                    break
 
-                # If the header rows are not set up properly, change them
-                if not headers_properly_setup:
-                    logging.warning("Prexisting table, with improper formatting: Fixing")
-                    # TODO: move all data, not just headers
-                    current_channel_log_worksheet.delete_row(1)
-                    current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
-            # If the official header row doesn't have the same amount of
-            # headers as the header row in the doc
-            else:
-                if num_rows == 1 or num_rows == 0:
-                    current_channel_log_worksheet.insert_row([], 1)
-                    current_channel_log_worksheet.insert_row(current_headers, 1)
-                    current_channel_log_worksheet.delete_row(3)
-
+            # If the header rows are not set up properly, change them
+            if not headers_properly_setup:
+                logging.warning("Prexisting table, with improper formatting: Fixing")
                 # TODO: move all data, not just headers
                 current_channel_log_worksheet.delete_row(1)
                 current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
-
-        # If no worksheet exists
+        # If the official header row doesn't have the same amount of
+        # headers as the header row in the doc
         else:
-            # Set up variables for creating a new spreadsheet
-            rows = 1
-            cols = len(ColumnHeaders)
+            if num_rows == 1 or num_rows == 0:
+                current_channel_log_worksheet.insert_row([], 1)
+                current_channel_log_worksheet.insert_row(current_headers, 1)
+                current_channel_log_worksheet.delete_row(3)
 
-            # Creates new worksheet
-            sheet.add_worksheet(desired_worksheet, rows, cols)
-            current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
+            # TODO: move all data, not just headers
+            current_channel_log_worksheet.delete_row(1)
             current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
 
-        message_callback_lookup = {
-            'message_change': _message_edit,
-            'message_deleted': _message_delete,
-            'message_reply': _message_reply,
-            None: _message
-        }
+    # If no worksheet exists
+    else:
+        # Set up variables for creating a new spreadsheet
+        rows = 1
+        cols = len(ColumnHeaders)
 
-        callback = message_callback_lookup[payload.get('subtype')]
+        # Creates new worksheet
+        sheet.add_worksheet(desired_worksheet, rows, cols)
+        current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
+        current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
 
-        callback(payload, current_channel_log_worksheet)
+    message_callback_lookup = {
+        'message_change': _message_edit,
+        'message_deleted': _message_delete,
+        'message_reply': _message_reply,
+        None: _message
+    }
+
+    callback = message_callback_lookup[payload.get('subtype')]
+
+    callback(payload, current_channel_log_worksheet)
 
