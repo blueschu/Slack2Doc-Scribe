@@ -46,7 +46,7 @@ def create_app() -> Flask:
             # Ignore message that were not sent to a whitelisted channel.
             return
 
-        gspread_utils.put_into_sheets(event)
+        gspread_utils.publish_slack_message(event)
 
     return app
 

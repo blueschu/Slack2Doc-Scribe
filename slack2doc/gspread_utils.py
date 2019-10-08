@@ -33,10 +33,70 @@ class ColumnHeaders(Enum):
     TimestampEdited = 6
 
 
-def _message_edit(msg, sheet):
+def publish_slack_message(slack_event_data):
     """
-    Helper function to handle editting messages. Searchs for
-    timestamp of the message that is being edited. If found,
+    Write the Slack message specified by the provided data to the configured
+    Google Sheet
+    """
+
+    if slack_event_data['type'] != 'message':
+        raise TypeError("payload must be a Slack Event dictionary of type 'message'")
+
+    # Connecting to google's API
+    creds = SACreds.from_json_keyfile_name("Slack2Docscreds.json", GOOGLE_ACCESS_SCOPES)
+    client = gspread.authorize(creds)
+
+    sheet = client.open(settings.GOOGLE_SPREADSHEET_NAME)
+
+    # Gets the name of the worksheet that the message belongs in
+    desired_worksheet = slack_event_data['channel']
+
+    try:
+        current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
+
+        current_headers = current_channel_log_worksheet.row_values(1)
+        num_rows = current_channel_log_worksheet.col_count
+
+        # Check if the current_headers line up with the updated header structure
+        if current_headers != list(ColumnHeaders.__members__.keys()):
+            logging.warning("Prexisting table, with improper formatting: Fixing")
+            # TODO: move all data, not just headers
+            current_channel_log_worksheet.delete_row(1)
+        else:
+            if num_rows in (0, 1):
+                current_channel_log_worksheet.insert_row([], 1)
+                current_channel_log_worksheet.insert_row(current_headers, 1)
+                current_channel_log_worksheet.delete_row(3)
+            current_channel_log_worksheet.delete_row(1)
+
+    except gspread.WorksheetNotFound:
+        rows = 1
+        cols = len(ColumnHeaders)
+
+        # Create new worksheet
+        sheet.add_worksheet(desired_worksheet, rows, cols)
+        current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
+
+    current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
+
+    message_callback_lookup = {
+        'message_change': _publish_message_edit,
+        'message_deleted': _publish_message_delete,
+        'message_reply': _publish_message_reply,
+        None: _publish_message_new
+    }
+
+    callback = message_callback_lookup[slack_event_data.get('subtype')]
+
+    callback(slack_event_data, current_channel_log_worksheet)
+
+
+def _publish_message_edit(msg, sheet):
+    """
+    Update the configured Google Sheet by altering the row corresponding
+    to the edited message.
+
+    Search for the timestamp of the message that was edited. If found,
     the message will be altered and the "Edited Timestamp"
     column will be assigned the new timestamp
     """
@@ -77,10 +137,12 @@ def _message_edit(msg, sheet):
         logging.info(f"Cells ({cell_row}, {message_cell_col}), ({cell_row}, {edited_timestamp_cell_col}) updated")
 
 
-def _message_delete(msg, sheet):
+def _publish_message_delete(msg, sheet):
     """
-    Helper function to handle deleting messages. Searchs for
-    timestamp of the message that is being deleted. If found,
+    Remove the row corresponding to the specified deleted message from
+    the configured Google Sheet.
+
+    Search for the timestamp of the message that was deleted. If found,
     the whole row with the message will be deleted
     """
 
@@ -109,15 +171,15 @@ def _message_delete(msg, sheet):
         logging.info(f"Row {cell_row} deleted")
 
 
-def _message_reply(msg, sheet):
+def _publish_message_reply(msg, sheet):
     """
-    Helper function to handle replying to messages.
-    Yet to be implemented
+    Update the configured Google Sheet by adding row representing a reply
+    to a previous message.
     """
-    pass
+    raise NotImplemented
 
 
-def _message(msg, sheet):
+def _publish_message_new(msg, sheet):
     """
     Helper function to handle messages. Creates readable
     timestamp and inserts data into the spreadsheet above all other messages
@@ -129,61 +191,3 @@ def _message(msg, sheet):
     # (After row 1 (header row))
     sheet.insert_row(row_data, 2)
     logging.info("Message Added")
-
-
-def put_into_sheets(payload):
-    """
-    Function to handle inserting different types of slack messages into a
-    google spreadsheet
-    """
-
-    if payload['type'] != 'message':
-        raise TypeError("payload must be a Slack Event dictionary of type 'message'")
-
-    # Connecting to google's API
-    creds = SACreds.from_json_keyfile_name("Slack2Docscreds.json", GOOGLE_ACCESS_SCOPES)
-    client = gspread.authorize(creds)
-
-    sheet = client.open(settings.GOOGLE_SPREADSHEET_NAME)
-
-    # Gets the name of the worksheet that the message belongs in
-    desired_worksheet = payload['channel']
-
-    try:
-        current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
-
-        current_headers = current_channel_log_worksheet.row_values(1)
-        num_rows = current_channel_log_worksheet.col_count
-
-        # Check if the current_headers line up with the updated header structure
-        if current_headers != list(ColumnHeaders.__members__.keys()):
-            logging.warning("Prexisting table, with improper formatting: Fixing")
-            # TODO: move all data, not just headers
-            current_channel_log_worksheet.delete_row(1)
-        else:
-            if num_rows in (0, 1):
-                current_channel_log_worksheet.insert_row([], 1)
-                current_channel_log_worksheet.insert_row(current_headers, 1)
-                current_channel_log_worksheet.delete_row(3)
-            current_channel_log_worksheet.delete_row(1)
-
-    except gspread.WorksheetNotFound:
-        rows = 1
-        cols = len(ColumnHeaders)
-
-        # Create new worksheet
-        sheet.add_worksheet(desired_worksheet, rows, cols)
-        current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
-
-    current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
-
-    message_callback_lookup = {
-        'message_change': _message_edit,
-        'message_deleted': _message_delete,
-        'message_reply': _message_reply,
-        None: _message
-    }
-
-    callback = message_callback_lookup[payload.get('subtype')]
-
-    callback(payload, current_channel_log_worksheet)
