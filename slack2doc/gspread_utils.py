@@ -194,14 +194,12 @@ def put_into_sheets(payload):
             logging.warning("Prexisting table, with improper formatting: Fixing")
             # TODO: move all data, not just headers
             current_channel_log_worksheet.delete_row(1)
-            current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
         else:
             if num_rows in (0, 1):
                 current_channel_log_worksheet.insert_row([], 1)
                 current_channel_log_worksheet.insert_row(current_headers, 1)
                 current_channel_log_worksheet.delete_row(3)
             current_channel_log_worksheet.delete_row(1)
-            current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
 
     except gspread.WorksheetNotFound:
         rows = 1
@@ -210,7 +208,8 @@ def put_into_sheets(payload):
         # Creates new worksheet
         sheet.add_worksheet(desired_worksheet, rows, cols)
         current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
-        current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
+
+    current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
 
     message_callback_lookup = {
         'message_change': _message_edit,
