@@ -52,6 +52,11 @@ def create_app() -> Flask:
         except Exception as e:
             app.logger.exception(f"Failed to call Google Sheets API!")
 
+    @app.after_request
+    def after_request(response):
+        app.logger.info(f"Responding with message: ({response.status}) {response.response}")
+        return response
+
     return app
 
 
