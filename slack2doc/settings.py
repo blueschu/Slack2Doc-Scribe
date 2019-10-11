@@ -38,7 +38,7 @@ LOGGING = {
     },
     'formatters': {
         'default': {
-            'format': "[{asctime}] {levelname}:{name} - {message}",
+            'format': "[{asctime}] {levelname}:{name}({process}) - {message}",
             'style': '{',
         }
     },
