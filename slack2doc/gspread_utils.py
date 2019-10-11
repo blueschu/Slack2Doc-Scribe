@@ -43,7 +43,7 @@ def publish_slack_message(slack_event_data):
         raise TypeError("payload must be a Slack Event dictionary of type 'message'")
 
     # Connecting to google's API
-    creds = SACreds.from_json_keyfile_name("Slack2Docscreds.json", GOOGLE_ACCESS_SCOPES)
+    creds = SACreds.from_json_keyfile_name(settings.GOOGLE_CREDENTIALS_FILE, GOOGLE_ACCESS_SCOPES)
     client = gspread.authorize(creds)
 
     sheet = client.open(settings.GOOGLE_SPREADSHEET_NAME)
