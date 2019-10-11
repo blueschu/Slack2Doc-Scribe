@@ -21,6 +21,7 @@ GOOGLE_ACCESS_SCOPES = [
 
 DISPLAY_TIMEZONE = pytz.timezone('US/Eastern')
 
+logger = logging.getLogger(__name__)
 
 @unique
 class ColumnHeaders(Enum):
@@ -43,18 +44,18 @@ def publish_slack_message(slack_event_data):
         raise TypeError("payload must be a Slack Event dictionary of type 'message'")
 
     # Connecting to google's API
-    logging.debug(f"Connecting to Google API...")
+    logger.debug(f"Connecting to Google API...")
     creds = SACreds.from_json_keyfile_name(settings.GOOGLE_CREDENTIALS_FILE, GOOGLE_ACCESS_SCOPES)
     client = gspread.authorize(creds)
 
-    logging.debug(f"Attempting to open sheet '{settings.GOOGLE_CREDENTIALS_FILE}'")
+    logger.debug(f"Attempting to open sheet '{settings.GOOGLE_CREDENTIALS_FILE}'")
     sheet = client.open(settings.GOOGLE_SPREADSHEET_NAME)
 
     # Gets the name of the worksheet that the message belongs in
     desired_worksheet = slack_event_data['channel']
 
     try:
-        logging.debug(f"Attempting to load worksheet '{desired_worksheet}'")
+        logger.debug(f"Attempting to load worksheet '{desired_worksheet}'")
         current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
 
         current_headers = current_channel_log_worksheet.row_values(1)
@@ -62,7 +63,7 @@ def publish_slack_message(slack_event_data):
 
         # Check if the current_headers line up with the updated header structure
         if current_headers != list(ColumnHeaders.__members__.keys()):
-            logging.warning("Prexisting table, with improper formatting: Fixing")
+            logger.warning("Prexisting table, with improper formatting: Fixing")
             # TODO: move all data, not just headers
             current_channel_log_worksheet.delete_row(1)
         else:
@@ -73,7 +74,7 @@ def publish_slack_message(slack_event_data):
             current_channel_log_worksheet.delete_row(1)
 
     except gspread.WorksheetNotFound:
-        logging.info(f"Worksheet '{desired_worksheet}' does not exist. Creating new worksheet.")
+        logger.info(f"Worksheet '{desired_worksheet}' does not exist. Creating new worksheet.")
         rows = 1
         cols = len(ColumnHeaders)
 
@@ -91,9 +92,9 @@ def publish_slack_message(slack_event_data):
     }
 
     callback = message_callback_lookup[slack_event_data.get('subtype')]
-    logging.debug(f"Received message of type {slack_event_data.get('subtype')}. Calling type handler...")
+    logger.debug(f"Received message of type {slack_event_data.get('subtype')}. Calling type handler...")
     callback(slack_event_data, current_channel_log_worksheet)
-    logging.debug(f"Write to Google Sheets successful.")
+    logger.debug(f"Write to Google Sheets successful.")
 
 
 def _publish_message_edit(msg, sheet):
@@ -121,10 +122,10 @@ def _publish_message_edit(msg, sheet):
     # If only one cell is found with the timestamp of the original message
 
     if not valid_cells:
-        logging.warning("Original message not found")
+        logger.warning("Original message not found")
         # TODO: Add additional error information
     elif len(valid_cells) > 1:
-        logging.warning("Multiple Cells with same time stamp: Unable to edit")
+        logger.warning("Multiple Cells with same time stamp: Unable to edit")
         # TODO: Add additional error information
     else:
         # Get row value
@@ -139,7 +140,7 @@ def _publish_message_edit(msg, sheet):
         sheet.update_cell(cell_row, edited_timestamp_cell_col, new_time_stamp)
 
         # Prints success to console
-        logging.info(f"Cells ({cell_row}, {message_cell_col}), ({cell_row}, {edited_timestamp_cell_col}) updated")
+        logger.info(f"Cells ({cell_row}, {message_cell_col}), ({cell_row}, {edited_timestamp_cell_col}) updated")
 
 
 def _publish_message_delete(msg, sheet):
@@ -162,10 +163,10 @@ def _publish_message_delete(msg, sheet):
     valid_cells = [c for c in cells if c.col == ColumnHeaders['Timestamp'].value]
 
     if not valid_cells:
-        logging.warning("Original message not found")
+        logger.warning("Original message not found")
         # TODO: Add additional error information
     elif len(valid_cells) > 1:
-        logging.warning("Multiple Cells with same time stamp: Unable to delete")
+        logger.warning("Multiple Cells with same time stamp: Unable to delete")
         # TODO: Add additional error information
     else:
         # Get row value
@@ -173,7 +174,7 @@ def _publish_message_delete(msg, sheet):
         # Delete row
         sheet.delete_row(cell_row)
         # Prints Success message to console
-        logging.info(f"Row {cell_row} deleted")
+        logger.info(f"Row {cell_row} deleted")
 
 
 def _publish_message_reply(msg, sheet):
@@ -181,7 +182,7 @@ def _publish_message_reply(msg, sheet):
     Update the configured Google Sheet by adding row representing a reply
     to a previous message.
     """
-    logging.warning("Reply functionality not implemented")
+    logger.warning("Reply functionality not implemented")
 
 
 def _publish_message_new(msg, sheet):
@@ -195,4 +196,4 @@ def _publish_message_new(msg, sheet):
     # Inserts row into the spreadsheet with an offset of 2
     # (After row 1 (header row))
     sheet.insert_row(row_data, 2)
-    logging.info("Message Added")
+    logger.info("Message Added")
