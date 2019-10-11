@@ -1,6 +1,6 @@
-*.pyc
-*.csv
 __pycache__/
+/.secrets.json
+/.idea
 .pytest_cache/
 .vscode/
 .cache
