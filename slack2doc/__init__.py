@@ -43,7 +43,9 @@ def create_app() -> Flask:
         event = event_data["event"]
 
         if event['channel'] not in settings.SLACK_WATCHED_CHANNELS:
-            # Ignore message that were not sent to a whitelisted channel.
+            app.logger.debug(f"Message being ignored due to bad channel '{event['channel']}'. "
+                             f"Only {settings.SLACK_WATCHED_CHANNELS} are allowed."
+            )
             return
 
         gspread_utils.publish_slack_message(event)
