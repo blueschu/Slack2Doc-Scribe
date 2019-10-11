@@ -43,15 +43,18 @@ def publish_slack_message(slack_event_data):
         raise TypeError("payload must be a Slack Event dictionary of type 'message'")
 
     # Connecting to google's API
+    logging.debug(f"Connecting to Google API...")
     creds = SACreds.from_json_keyfile_name(settings.GOOGLE_CREDENTIALS_FILE, GOOGLE_ACCESS_SCOPES)
     client = gspread.authorize(creds)
 
+    logging.debug(f"Attempting to open sheet '{settings.GOOGLE_CREDENTIALS_FILE}'")
     sheet = client.open(settings.GOOGLE_SPREADSHEET_NAME)
 
     # Gets the name of the worksheet that the message belongs in
     desired_worksheet = slack_event_data['channel']
 
     try:
+        logging.debug(f"Attempting to load worksheet '{desired_worksheet}'")
         current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
 
         current_headers = current_channel_log_worksheet.row_values(1)
@@ -70,6 +73,7 @@ def publish_slack_message(slack_event_data):
             current_channel_log_worksheet.delete_row(1)
 
     except gspread.WorksheetNotFound:
+        logging.info(f"Worksheet '{desired_worksheet}' does not exist. Creating new worksheet.")
         rows = 1
         cols = len(ColumnHeaders)
 

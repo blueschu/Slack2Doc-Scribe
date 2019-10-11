@@ -47,8 +47,10 @@ def create_app() -> Flask:
                              f"Only {settings.SLACK_WATCHED_CHANNELS} are allowed."
             )
             return
-
-        gspread_utils.publish_slack_message(event)
+        try:
+            gspread_utils.publish_slack_message(event)
+        except Exception as e:
+            app.logger.exception(f"Failed to call Google Sheets API!")
 
     return app
 
