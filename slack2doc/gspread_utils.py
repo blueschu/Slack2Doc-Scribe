@@ -77,12 +77,12 @@ def publish_slack_message(slack_event_data):
         sheet.add_worksheet(desired_worksheet, rows, cols)
         current_channel_log_worksheet = sheet.worksheet(desired_worksheet)
 
-    current_channel_log_worksheet.insert_row(ColumnHeaders.__members__.keys(), 1)
+    current_channel_log_worksheet.insert_row(list(ColumnHeaders.__members__.keys()), 1)
 
     message_callback_lookup = {
-        'message_change': _publish_message_edit,
+        'message_changed': _publish_message_edit,
         'message_deleted': _publish_message_delete,
-        'message_reply': _publish_message_reply,
+        'message_replied': _publish_message_reply,
         None: _publish_message_new
     }
 
@@ -125,9 +125,9 @@ def _publish_message_edit(msg, sheet):
         # Get row value
         cell_row = valid_cells[0].row
         # Get column value where the message is stored
-        message_cell_col = ColumnHeaders['Message']
+        message_cell_col = ColumnHeaders['Message'].value
         # Get column value where edited timestamp is stored
-        edited_timestamp_cell_col = ColumnHeaders['Edited Timestamp']
+        edited_timestamp_cell_col = ColumnHeaders['TimestampEdited'].value
 
         # Updated the cells with new edits
         sheet.update_cell(cell_row, message_cell_col, new_message)
@@ -176,7 +176,7 @@ def _publish_message_reply(msg, sheet):
     Update the configured Google Sheet by adding row representing a reply
     to a previous message.
     """
-    raise NotImplemented
+    logging.warning("Reply functionality not implemented")
 
 
 def _publish_message_new(msg, sheet):
@@ -184,7 +184,7 @@ def _publish_message_new(msg, sheet):
     Helper function to handle messages. Creates readable
     timestamp and inserts data into the spreadsheet above all other messages
     """
-    timestamp = datetime.fromtimestamp(msg['ts'], tz=DISPLAY_TIMEZONE)
+    timestamp = datetime.fromtimestamp(float(msg['ts']), tz=DISPLAY_TIMEZONE)
     row_data = [msg['user'], msg['text'], timestamp.isoformat(), msg['user'], msg['ts']]
 
     # Inserts row into the spreadsheet with an offset of 2
