@@ -87,8 +87,9 @@ def publish_slack_message(slack_event_data):
     }
 
     callback = message_callback_lookup[slack_event_data.get('subtype')]
-
+    logging.debug(f"Received message of type {slack_event_data.get('subtype')}. Calling type handler...")
     callback(slack_event_data, current_channel_log_worksheet)
+    logging.debug(f"Write to Google Sheets successful.")
 
 
 def _publish_message_edit(msg, sheet):
