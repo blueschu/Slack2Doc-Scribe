@@ -3,7 +3,7 @@ Interface for writing Slack message updates to a Google Sheet.
 """
 
 import logging
-from _collections import defaultdict
+from collections import defaultdict
 from datetime import datetime
 from enum import Enum, unique
 from typing import DefaultDict, List, Optional
