@@ -6,7 +6,7 @@ import logging
 from collections import defaultdict
 from datetime import datetime
 from enum import Enum, unique
-from typing import DefaultDict, List, Optional
+from typing import DefaultDict, List
 
 import gspread
 import pytz
@@ -61,6 +61,7 @@ class ColumnHeaders(Enum):
 
 class BaseSheetUpdate:
     """Base class for all sheet update classes."""
+
     def __init__(self, message_id: str, message: str, timestamp: str):
         self.message_id = message_id
         self.message = message
