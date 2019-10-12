@@ -214,8 +214,11 @@ def get_google_client():
 def _write_pending_updates(client):
     """
     Write all pending Google Sheet updates to the Google API.
+
+    **WARNING:** This function has not been tested in a mutlithreaded
+    environment and may behave unexpected if updates are registered
+    while this function is being run.
     """
-    global _pending_sheet_updates
     logger.debug("Writing updates to sheet...")
     for sheet_name, updates in _pending_sheet_updates.items():
         try:
