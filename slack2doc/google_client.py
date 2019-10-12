@@ -66,11 +66,6 @@ class BaseSheetUpdate:
         self.message = message
         self.timestamp = datetime.fromtimestamp(float(timestamp), tz=DISPLAY_TIMEZONE)
 
-    message_id: str
-    message: Optional[str]
-    change_existing: bool
-    slack_event_data: dict
-
     def apply_to_sheet(self, worksheet: gspread.Worksheet):
         raise NotImplemented
 
