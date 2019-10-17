@@ -6,10 +6,10 @@ for permanent and accessible storage.
 import http
 import logging.config
 
-from flask import Flask, redirect
+from flask import Flask, redirect, Response
 from slackeventsapi import SlackEventAdapter
 
-from . import settings, slack_utils, gspread_utils
+from . import settings, slack_utils, message_utils, google_client
 
 __version__ = "0.1.0"
 
@@ -23,6 +23,9 @@ def create_app() -> Flask:
 
     # Perform slack_utils module's app initialization
     slack_utils.init_app(app)
+
+    # Perform google_client module's app initialization
+    google_client.init_app(app)
 
     slack_events_adapter = SlackEventAdapter(
         settings.SLACK_SIGNING_SECRET,
@@ -43,10 +46,26 @@ def create_app() -> Flask:
         event = event_data["event"]
 
         if event['channel'] not in settings.SLACK_WATCHED_CHANNELS:
-            # Ignore message that were not sent to a whitelisted channel.
+            app.logger.debug(f"Message being ignored due to bad channel '{event['channel']}'. "
+                             f"Only {settings.SLACK_WATCHED_CHANNELS} are allowed."
+            )
             return
 
-        gspread_utils.publish_slack_message(event)
+        try:
+            message_utils.register_message_for_update(event)
+        except Exception as e:
+            app.logger.exception(f"Failed to call Google Sheets API!")
+
+        # Invoke Flask to send a streaming request to force this app
+        # to close connection with the client BEFORE running the after_request
+        # handles. This is critical, since updating a Google Sheets at the end
+        # of a request can cause this app to exceed the three-second timeout
+        # for the Slack Event's API, resulting in Slack sending a duplicate
+        # event message.
+        def response_stream():
+            yield ''
+
+        return Response(response_stream())
 
     return app
 
