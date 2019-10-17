@@ -79,8 +79,8 @@ def _build_update_new(slack_event):
     event.
     """
     return google_client.SheetUpdateNew(
-        message_id=slack_event['message']['client_msg_id'],
-        message=slack_event['message']['text'],
-        timestamp=slack_event['message']['ts'],
+        message_id=slack_event['client_msg_id'],
+        message=slack_event['text'],
+        timestamp=slack_event['ts'],
         user_id=slack_event['user'],
     )
