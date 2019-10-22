@@ -1,8 +1,8 @@
 """
 Interface for writing Slack message updates to a Google Sheet.
 """
-
 import logging
+import os
 from collections import defaultdict
 from datetime import datetime
 from enum import Enum, unique
@@ -175,9 +175,9 @@ def init_app(app):
     """
     Initialize the specified slack app with this module's teardown callback.
     """
-
+    using_cgi = 'CGI' in os.environ['GATEWAY_INTERFACE']
     def _teardown(_e):
-        if len(_pending_sheet_updates) > MAX_PENDING_SHEET_WRITES:
+        if len(_pending_sheet_updates) > MAX_PENDING_SHEET_WRITES or using_cgi:
             _write_pending_updates(get_google_client())
         logger.debug("Tearing down")
 
