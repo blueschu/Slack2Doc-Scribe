@@ -84,7 +84,7 @@ class SheetUpdateNew(BaseSheetUpdate):
         this update's new Slack message.
         """
         logger.debug(f"Fetching username for ID {self.user_id}")
-        user_name = slack_utils.get_user_display(self.user_id)
+        user_name = 'TEMP_PLACEHOLDER' #slack_utils.get_user_display(self.user_id)
         logger.debug(f"Found user {user_name} for ID {self.user_id}")
         row_data = [
             self.message_id,
