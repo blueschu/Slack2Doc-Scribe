@@ -176,6 +176,7 @@ def init_app(app):
     Initialize the specified slack app with this module's teardown callback.
     """
     using_cgi = 'CGI' in os.environ['GATEWAY_INTERFACE']
+
     def _teardown(_e):
         if len(_pending_sheet_updates) > MAX_PENDING_SHEET_WRITES or using_cgi:
             _write_pending_updates(get_google_client())
@@ -248,7 +249,11 @@ def _ensure_sheet_formatting(worksheet: gspread.Worksheet):
 
     # Check if the current_headers line up with the updated header structure
     if worksheet_headers != expected_headers:
-        logger.warning("Prexisting table, with improper formatting: Fixing")
+        logger.warning(
+            "Prexisting table, with improper formatting: Fixing\n"
+            "Expected headers: {}\n"
+            "Found headers {}\n".format(expected_headers, worksheet_headers)
+        )
         # TODO: move all data, not just headers
         worksheet.delete_row(1)
         worksheet.insert_row(expected_headers, 1)
