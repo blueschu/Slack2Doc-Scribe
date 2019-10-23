@@ -251,6 +251,7 @@ def _ensure_sheet_formatting(worksheet: gspread.Worksheet):
         logger.warning("Prexisting table, with improper formatting: Fixing")
         # TODO: move all data, not just headers
         worksheet.delete_row(1)
+        worksheet.insert_row(expected_headers, 1)
     else:
         # TODO: ensure the below is still necessary
         if worksheet.row_count in (0, 1):
