@@ -201,7 +201,7 @@ def get_google_client():
     global _client
     if not _client:
         # Connecting to google's API
-        logger.debug(f"Connecting to Google API...")
+        logger.debug("Connecting to Google API...")
         creds = SACreds.from_json_keyfile_name(settings.GOOGLE_CREDENTIALS_FILE, GOOGLE_ACCESS_SCOPES)
         _client = gspread.authorize(creds)
 
@@ -216,8 +216,8 @@ def _write_pending_updates(client):
     environment and may behave unexpected if updates are registered
     while this function is being run.
     """
-    logger.debug("Writing updates to sheet...")
     for sheet_name, updates in _pending_sheet_updates.items():
+        logger.debug("Writing {} updates to sheet '{}'...".format(len(updates), sheet_name))
         try:
             spreadsheet = client.open(sheet_name)
         except gspread.SpreadsheetNotFound:
