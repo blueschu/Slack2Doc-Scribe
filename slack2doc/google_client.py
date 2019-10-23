@@ -83,7 +83,9 @@ class SheetUpdateNew(BaseSheetUpdate):
         Add a row to the specified Google Sheet worksheet corresponding to
         this update's new Slack message.
         """
+        logger.debug(f"Fetching username for ID {self.user_id}")
         user_name = slack_utils.get_user_display(self.user_id)
+        logger.debug(f"Found user {user_name} for ID {self.user_id}")
         row_data = [
             self.message_id,
             user_name,
@@ -93,6 +95,7 @@ class SheetUpdateNew(BaseSheetUpdate):
 
         # Inserts row into the spreadsheet with an offset of 2
         # (After row 1 (header row))
+        logger.debug(f"Attempting to insert row {row_data} at position 2")
         worksheet.insert_row(row_data, 2)
         logger.info(f"Message with id={self.message} by {user_name} added")
 
