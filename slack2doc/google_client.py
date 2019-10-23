@@ -233,6 +233,7 @@ def _write_pending_updates(client):
         _ensure_sheet_formatting(worksheet)
 
         for update in updates:
+            logger.debug(f"{update}: {repr(update.__dict__)}")
             update.apply_to_sheet(worksheet)
 
     _pending_sheet_updates.clear()
