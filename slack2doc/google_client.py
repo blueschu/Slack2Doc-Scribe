@@ -243,7 +243,7 @@ def _ensure_sheet_formatting(worksheet: gspread.Worksheet):
 
     Overwrites the header row if a header mismatch is found.
     """
-    worksheet_headers = worksheet.row_values(1)
+    worksheet_headers = list(worksheet.row_values(1))
     expected_headers = list(ColumnHeaders.__members__.keys())
 
     # Check if the current_headers line up with the updated header structure
