@@ -122,9 +122,9 @@ def _api_fetch_user_info(user_id: str) -> SlackUser:
 
     Raises a `RuntimeError` if the API request is unsuccessful.
     """
+    logger.debug(f"Refreshing data from Slack API on user with ID {user_id}")
     response = _CLIENT.users_info(user=user_id)
-
-    logger.debug(f"Refreshing data on user with ID {user_id}")
+    logger.debug(f"Response recieved with status {response.status_code}")
 
     if response["ok"]:
         user = response['user']
