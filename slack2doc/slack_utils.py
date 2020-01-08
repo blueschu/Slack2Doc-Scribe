@@ -30,6 +30,8 @@ _CLIENT = slack.WebClient(token=settings.SLACK_API_TOKEN)
 Slack WebClient instance for this module's interactions with the Slack WebAPI.
 """
 
+logger = logging.getLogger(__name__)
+
 
 class SlackUser:
     """
@@ -118,16 +120,18 @@ def _api_fetch_user_info(user_id: str) -> SlackUser:
     """
     response = _CLIENT.users_info(user=user_id)
 
+    logger.debug(f"Refreshing data on user with ID {user_id}")
+
     if response["ok"]:
         user = response['user']
         return SlackUser(**user, last_refreshed=datetime.now())
     elif response["ok"] is False and response["headers"]["Retry-After"]:
         err_message = f"Slack Web API rate limit exceeded when fetching user info for user '{user_id}'"
-        logging.error(err_message)
+        logger.error(err_message)
         raise RuntimeError(err_message)
     else:
         err_message = f"Failed to fetch user info for user '{user_id}' - API request failed with status code {response.status_code}"
-        logging.error(err_message)
+        logger.error(err_message)
         raise RuntimeError(err_message)
 
 
