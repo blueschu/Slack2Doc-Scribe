@@ -69,7 +69,8 @@ class SlackUser:
         """
         Convert this `SlackUser` into a JSON serializable dictionary.
         """
-        return {**self.__dict__, 'updated': self.last_refreshed.timestamp()}
+
+        return {**self.__dict__, 'last_refreshed': self.last_refreshed.timestamp()}
 
     def __str__(self):
         return f"SlackUser(id={self.id}, display_name='{self.display_name}', " \
