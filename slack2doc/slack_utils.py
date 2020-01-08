@@ -101,6 +101,8 @@ def get_user_display(user_id: str) -> str:
     logger.debug(f"Looking up user name for ID {user_id}")
     if not _SLACK_USER_CACHE:
         _SLACK_USER_CACHE.update(_load_user_cache())
+    else:
+        logger.debug("User cache already exists")
     try:
         logger.debug(f"Attempting to load ID {user_id} from cache")
         user = _SLACK_USER_CACHE[user_id]
@@ -144,7 +146,7 @@ def _load_user_cache() -> Dict[str, SlackUser]:
     Read the configured user cache file and return is contents as a
     dictionary mapping between user ids and `SlackUser` instances.
     """
-    logger.debug("Loading Slack user cache from storage...")
+    logger.debug(f"Loading Slack user cache from {settings.SLACK_USER_CACHE_FILE}...")
     try:
         with open(settings.SLACK_USER_CACHE_FILE, "r") as in_file:
             user_dict = json.load(in_file)
