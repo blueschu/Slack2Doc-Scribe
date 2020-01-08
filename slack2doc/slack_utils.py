@@ -99,7 +99,7 @@ def get_user_display(user_id: str) -> str:
     id.
     """
     logger.debug(f"Looking up user name for ID {user_id}")
-    if _SLACK_USER_CACHE is None:
+    if not _SLACK_USER_CACHE:
         _SLACK_USER_CACHE.update(_load_user_cache())
     try:
         logger.debug(f"Attempting to load ID {user_id} from cache")
