@@ -140,11 +140,14 @@ def _load_user_cache() -> Dict[str, SlackUser]:
     Read the configured user cache file and return is contents as a
     dictionary mapping between user ids and `SlackUser` instances.
     """
+    logger.debug("Loading Slack user cache from storage...")
     try:
         with open(settings.SLACK_USER_CACHE_FILE, "r") as in_file:
             user_dict = json.load(in_file)
+        logger.debug("Found user cache. Building user structures...")
         return {k: SlackUser(**v) for k, v in user_dict.items()}
     except FileNotFoundError:
+        logger.debug("No previous Slack user cache exists! Returning empty cache...")
         return {}
 
 
