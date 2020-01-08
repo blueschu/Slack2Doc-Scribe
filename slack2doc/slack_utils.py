@@ -98,14 +98,18 @@ def get_user_display(user_id: str) -> str:
     Return the display name of the Slack user with the specified user
     id.
     """
+    logger.debug(f"Looking up user name for ID {user_id}")
     if _SLACK_USER_CACHE is None:
         _SLACK_USER_CACHE.update(_load_user_cache())
     try:
+        logger.debug(f"Attempting to load ID {user_id} from cache")
         user = _SLACK_USER_CACHE[user_id]
         if user.entry_expired:
+            logger.debug(f"Record for user ID {user_id} is expired! Refreshing records")
             user = _api_fetch_user_info(user_id)
             _SLACK_USER_CACHE[user_id] = user
     except KeyError:
+        logger.debug(f"User not found in cache. Fetching user info from Slack API")
         user = _api_fetch_user_info(user_id)
         _SLACK_USER_CACHE[user_id] = user
     return user.display_name
